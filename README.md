@@ -9,6 +9,7 @@ A modern Android application for managing student attendance with SMS notificati
 ### 📋 Student Management
 
 - Add new students with name and parent phone number
+- **Edit student information** (name and parent phone)
 - View all students in a clean list
 - Remove students (soft delete - preserves attendance history)
 - View individual student attendance summary and history
@@ -28,13 +29,15 @@ A modern Android application for managing student attendance with SMS notificati
 
 - **Automatic SMS** sent to parents when student is marked absent
 - SMS must succeed before attendance is recorded
-- Error dialog shown if SMS fails
+- **Beautiful Snackbar** notifications for SMS success/error
+- Error dialog shown if SMS completely fails
 - Configure sender number through settings
 - Auto-detect SIM number (when available)
 
 ### 📊 Attendance History
 
 - View attendance records by date
+- **Navigate to dedicated detail screen** for each date (optimized performance)
 - Summary statistics (Present/Absent/Holiday counts)
 - Individual student history with attendance percentage
 - Circular progress indicator for attendance rate
@@ -83,7 +86,8 @@ app/src/main/java/com/abdur/rahman/attendanceapp/
 │   │   ├── AttendanceScreen.kt    # Attendance marking screen
 │   │   ├── StudentsScreen.kt      # Student list & management
 │   │   ├── StudentDetailScreen.kt # Individual student summary
-│   │   ├── HistoryScreen.kt       # Attendance history view
+│   │   ├── HistoryScreen.kt       # Attendance history list
+│   │   ├── HistoryDetailScreen.kt # Date-wise attendance details
 │   │   ├── AddStudentScreen.kt    # Add student form
 │   │   └── ManageStudentsScreen.kt
 │   ├── viewmodel/
@@ -91,7 +95,8 @@ app/src/main/java/com/abdur/rahman/attendanceapp/
 │   │   ├── AddStudentViewModel.kt
 │   │   ├── StudentDetailViewModel.kt
 │   │   ├── StudentManagementViewModel.kt
-│   │   └── HistoryViewModel.kt
+│   │   ├── HistoryViewModel.kt
+│   │   └── HistoryDetailViewModel.kt
 │   └── theme/
 │       ├── Color.kt               # Color definitions
 │       ├── Theme.kt               # Theme configuration
@@ -245,11 +250,13 @@ If SMS fails → Error dialog, attendance NOT saved
 │  5 Students                     │
 │                                 │
 │  ┌───────────────────────────┐  │
-│  │ 👤 John Doe          > 🗑 │  │
+│  │ 👤 John Doe      > ✏️ 🗑 │  │
 │  │    📞 +880123456789       │  │
 │  └───────────────────────────┘  │
-│         ↓ Tap                   │
+│         ↓ Tap card              │
 │  Opens Student Detail Screen    │
+│         ↓ Tap ✏️                │
+│  Opens Edit Student Dialog      │
 │                                 │
 ├─────────────────────────────────┤
 │                    [+ Add Student]
@@ -295,16 +302,42 @@ If SMS fails → Error dialog, attendance NOT saved
 ┌─────────────────────────────────┐
 │  📅 History                     │
 ├─────────────────────────────────┤
-│  Select a date to view          │
+│  Select a date to view details  │
 │                                 │
 │  ┌───────────────────────────┐  │
-│  │ December 23, 2025         │  │
-│  │ ✓3  ✗1  🏖1               │  │
+│  │ 📅 Monday, December 23    > │
+│  │    2025-12-23              │  │
+│  └───────────────────────────┘  │
+│         ↓ Tap                   │
+│  ┌───────────────────────────┐  │
+│  │ 📅 Sunday, December 22    > │
+│  │    2025-12-22              │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+### 6. History Detail Screen
+
+```
+┌─────────────────────────────────┐
+│  ← Attendance Details           │
+│    Monday, December 23, 2025    │
+├─────────────────────────────────┤
+│  ┌───────────────────────────┐  │
+│  │        Summary            │  │
+│  │  ┌───┐  ┌───┐  ┌───┐     │  │
+│  │  │ 3 │  │ 1 │  │ 1 │     │  │
+│  │  │ ✓ │  │ ✗ │  │ 🏖│     │  │
+│  │  └───┘  └───┘  └───┘     │  │
+│  │  Total Students: 5        │  │
 │  └───────────────────────────┘  │
 │                                 │
+│  Student Records                │
 │  ┌───────────────────────────┐  │
-│  │ December 22, 2025         │  │
-│  │ ✓4  ✗1  🏖0               │  │
+│  │ John Doe      │ ✓ Present │  │
+│  └───────────────────────────┘  │
+│  ┌───────────────────────────┐  │
+│  │ Jane Smith    │ ✗ Absent  │  │
 │  └───────────────────────────┘  │
 └─────────────────────────────────┘
 ```
@@ -373,8 +406,15 @@ Prevents accidental attendance marking:
 For absent marking:
 
 1. SMS is sent FIRST
-2. If SMS succeeds → Database is updated
-3. If SMS fails → Error dialog shown, database NOT updated
+2. If SMS succeeds → Green Snackbar notification, Database is updated
+3. If SMS fails → Red Error dialog shown, database NOT updated
+
+### Edit Student
+
+- Tap the pencil (✏️) icon on any student card
+- Edit dialog opens with pre-filled name and phone
+- Validation ensures valid data before saving
+- Changes sync to Firebase immediately
 
 ### Theme Persistence
 

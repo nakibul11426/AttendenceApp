@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
@@ -123,6 +124,7 @@ fun StudentsScreen(
                         StudentCard(
                             student = student,
                             onClick = { onStudentClick(student.id, student.name) },
+                            onEdit = { managementViewModel.showEditDialog(student) },
                             onRemove = { managementViewModel.showDeleteConfirmation(student) }
                         )
                     }
@@ -159,12 +161,29 @@ fun StudentsScreen(
             onDismiss = { managementViewModel.hideDeleteConfirmation() }
         )
     }
+    
+    // Edit Student Dialog
+    managementState.editingStudent?.let { student ->
+        EditStudentDialog(
+            student = student,
+            name = managementState.editName,
+            phone = managementState.editPhone,
+            nameError = managementState.editNameError,
+            phoneError = managementState.editPhoneError,
+            isLoading = managementState.isEditLoading,
+            onNameChange = managementViewModel::onEditNameChange,
+            onPhoneChange = managementViewModel::onEditPhoneChange,
+            onSave = managementViewModel::updateStudent,
+            onDismiss = managementViewModel::hideEditDialog
+        )
+    }
 }
 
 @Composable
 fun StudentCard(
     student: Student,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onRemove: () -> Unit
 ) {
     Card(
@@ -177,7 +196,7 @@ fun StudentCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -226,24 +245,43 @@ fun StudentCard(
                 }
             }
             
-            // Chevron indicator for clickable
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = "View Details",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
-            )
-            
-            IconButton(
-                onClick = onRemove,
-                colors = IconButtonDefaults.iconButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
+            // Action buttons row
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // Chevron indicator for clickable
                 Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Remove Student"
+                    Icons.Default.ChevronRight,
+                    contentDescription = "View Details",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
                 )
+                
+                // Edit button
+                IconButton(
+                    onClick = onEdit,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit Student"
+                    )
+                }
+                
+                // Delete button
+                IconButton(
+                    onClick = onRemove,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Remove Student"
+                    )
+                }
             }
         }
     }
@@ -420,4 +458,95 @@ fun EmptyStudentsView(
             Text("Add Student")
         }
     }
+}
+
+@Composable
+fun EditStudentDialog(
+    student: Student,
+    name: String,
+    phone: String,
+    nameError: String?,
+    phoneError: String?,
+    isLoading: Boolean,
+    onNameChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.Edit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = "Edit Student",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Update information for ${student.name}",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Student Name") },
+                    placeholder = { Text("Enter name") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null)
+                    },
+                    singleLine = true,
+                    isError = nameError != null,
+                    supportingText = nameError?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = onPhoneChange,
+                    label = { Text("Parent Phone") },
+                    placeholder = { Text("Enter phone number") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Phone, contentDescription = null)
+                    },
+                    singleLine = true,
+                    isError = phoneError != null,
+                    supportingText = phoneError?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onSave,
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Save")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

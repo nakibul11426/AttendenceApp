@@ -4,28 +4,29 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.telephony.SmsManager
-import android.widget.Toast
 import androidx.core.content.ContextCompat
+
+// Sealed class to represent SMS result
+sealed class SmsResult {
+    data class Success(val studentName: String) : SmsResult()
+    data class Error(val message: String, val studentName: String) : SmsResult()
+    object PermissionDenied : SmsResult()
+}
 
 object SmsHelper {
     
     /**
      * Send SMS notification to parent about student absence
-     * Returns true if SMS was sent successfully
+     * Returns SmsResult indicating success or failure
      */
     fun sendAbsenceSms(
         context: Context,
         phoneNumber: String,
         studentName: String
-    ): Boolean {
+    ): SmsResult {
         return try {
             if (!hasSmSPermission(context)) {
-                Toast.makeText(
-                    context,
-                    "SMS permission not granted",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return false
+                return SmsResult.PermissionDenied
             }
             
             val message = "Your child $studentName was marked absent today."
@@ -39,20 +40,9 @@ object SmsHelper {
                 null
             )
             
-            Toast.makeText(
-                context,
-                "SMS sent to parent of $studentName",
-                Toast.LENGTH_SHORT
-            ).show()
-            
-            true
+            SmsResult.Success(studentName)
         } catch (e: Exception) {
-            Toast.makeText(
-                context,
-                "Failed to send SMS: ${e.message}",
-                Toast.LENGTH_SHORT
-            ).show()
-            false
+            SmsResult.Error(e.message ?: "Unknown error", studentName)
         }
     }
     

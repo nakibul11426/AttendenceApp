@@ -1,30 +1,24 @@
 package com.abdur.rahman.attendanceapp.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.abdur.rahman.attendanceapp.data.model.AttendanceRecord
-import com.abdur.rahman.attendanceapp.data.model.AttendanceStatus
 import com.abdur.rahman.attendanceapp.ui.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,6 +31,7 @@ import java.util.*
 fun HistoryScreenContent(
     isDarkTheme: Boolean = false,
     onToggleTheme: () -> Unit = {},
+    onDateClick: (String) -> Unit = {},
     viewModel: HistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -87,14 +82,7 @@ fun HistoryScreenContent(
                     ) { date ->
                         DateCard(
                             date = date,
-                            isExpanded = uiState.selectedDate == date,
-                            records = if (uiState.selectedDate == date) {
-                                uiState.attendanceRecords
-                            } else {
-                                emptyList()
-                            },
-                            isLoading = uiState.isLoading && uiState.selectedDate == date,
-                            onClick = { viewModel.selectDate(date) }
+                            onClick = { onDateClick(date) }
                         )
                     }
                 }
@@ -107,6 +95,7 @@ fun HistoryScreenContent(
 @Composable
 fun HistoryScreen(
     onNavigateBack: () -> Unit,
+    onDateClick: (String) -> Unit = {},
     viewModel: HistoryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -157,14 +146,7 @@ fun HistoryScreen(
                     ) { date ->
                         DateCard(
                             date = date,
-                            isExpanded = uiState.selectedDate == date,
-                            records = if (uiState.selectedDate == date) {
-                                uiState.attendanceRecords
-                            } else {
-                                emptyList()
-                            },
-                            isLoading = uiState.isLoading && uiState.selectedDate == date,
-                            onClick = { viewModel.selectDate(date) }
+                            onClick = { onDateClick(date) }
                         )
                     }
                 }
@@ -176,9 +158,6 @@ fun HistoryScreen(
 @Composable
 fun DateCard(
     date: String,
-    isExpanded: Boolean,
-    records: List<AttendanceRecord>,
-    isLoading: Boolean,
     onClick: () -> Unit
 ) {
     Card(
@@ -187,172 +166,44 @@ fun DateCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isExpanded) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Date Header
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Column {
-                        Text(
-                            text = formatDateDisplay(date),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = date,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
                 Icon(
-                    if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand"
+                    Icons.Default.CalendarMonth,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
                 )
-            }
-            
-            // Expanded Content
-            if (isExpanded) {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    }
-                } else if (records.isEmpty()) {
+                Column {
                     Text(
-                        text = "No records for this date",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        textAlign = TextAlign.Center,
+                        text = formatDateDisplay(date),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = date,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    // Summary row
-                    AttendanceSummary(records = records)
-                    
-                    // Individual records
-                    records.forEach { record ->
-                        AttendanceRecordItem(record = record)
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun AttendanceSummary(records: List<AttendanceRecord>) {
-    val presentCount = records.count { it.status == AttendanceStatus.PRESENT }
-    val absentCount = records.count { it.status == AttendanceStatus.ABSENT }
-    val holidayCount = records.count { it.status == AttendanceStatus.HOLIDAY }
-    val notMarkedCount = records.count { it.status == AttendanceStatus.NOT_MARKED }
-    
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        SummaryChip(count = presentCount, label = "Present", color = PresentColor)
-        SummaryChip(count = absentCount, label = "Absent", color = AbsentColor)
-        SummaryChip(count = holidayCount, label = "Holiday", color = HolidayColor)
-        if (notMarkedCount > 0) {
-            SummaryChip(count = notMarkedCount, label = "N/M", color = MaterialTheme.colorScheme.onSurface)
-        }
-    }
-}
-
-@Composable
-fun SummaryChip(count: Int, label: String, color: Color) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(color.copy(alpha = 0.2f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = count.toString(),
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-fun AttendanceRecordItem(record: AttendanceRecord) {
-    val statusColor = when (record.status) {
-        AttendanceStatus.NOT_MARKED -> MaterialTheme.colorScheme.onSurface
-        AttendanceStatus.PRESENT -> PresentColor
-        AttendanceStatus.ABSENT -> AbsentColor
-        AttendanceStatus.HOLIDAY -> HolidayColor
-    }
-    
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = record.studentName,
-            modifier = Modifier.weight(1f)
-        )
-        
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = statusColor.copy(alpha = 0.15f)
-        ) {
-            Text(
-                text = record.status.name.replace("_", " "),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = statusColor
+            
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "View details",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

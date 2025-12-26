@@ -85,6 +85,25 @@ class AttendanceRepository {
     }
     
     /**
+     * Update student information (name and/or phone)
+     */
+    suspend fun updateStudent(studentId: String, name: String, parentPhone: String): Result<Unit> {
+        return try {
+            studentsCollection.document(studentId)
+                .update(
+                    mapOf(
+                        "name" to name,
+                        "parentPhone" to parentPhone
+                    )
+                )
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
      * Get a single student by ID
      */
     suspend fun getStudentById(studentId: String): Student? {

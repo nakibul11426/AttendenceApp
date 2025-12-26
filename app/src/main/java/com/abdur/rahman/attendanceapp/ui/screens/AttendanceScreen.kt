@@ -44,9 +44,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.abdur.rahman.attendanceapp.data.model.AttendanceStatus
 import com.abdur.rahman.attendanceapp.data.model.Student
 import com.abdur.rahman.attendanceapp.ui.viewmodel.AttendanceViewModel
+import com.abdur.rahman.attendanceapp.ui.viewmodel.SnackbarMessage
 import com.abdur.rahman.attendanceapp.ui.viewmodel.StudentAttendanceItem
 import com.abdur.rahman.attendanceapp.util.SenderNumberPreferences
 import com.abdur.rahman.attendanceapp.util.SmsHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -358,6 +360,9 @@ fun AttendanceScreenContent(
     val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     
+    // Snackbar state
+    val snackbarHostState = remember { SnackbarHostState() }
+    
     // SMS Settings
     val senderNumberPreferences = remember { SenderNumberPreferences(context) }
     val senderNumber by senderNumberPreferences.senderNumber.collectAsState(initial = "")
@@ -385,6 +390,23 @@ fun AttendanceScreenContent(
             scope.launch {
                 senderNumberPreferences.saveSenderNumber(detected)
             }
+        }
+    }
+    
+    // Handle snackbar messages
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { message ->
+            val text = when (message) {
+                is SnackbarMessage.Success -> message.message
+                is SnackbarMessage.Error -> message.message
+            }
+            snackbarHostState.showSnackbar(
+                message = text,
+                duration = SnackbarDuration.Short
+            )
+            // Auto-dismiss after 3 seconds (Short duration is ~4 seconds)
+            delay(3000)
+            viewModel.clearSnackbarMessage()
         }
     }
     
@@ -492,6 +514,26 @@ fun AttendanceScreenContent(
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                val isError = uiState.snackbarMessage is SnackbarMessage.Error
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = if (isError) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        Color(0xFF4CAF50) // Success green
+                    },
+                    contentColor = if (isError) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        Color.White
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
     ) { paddingValues ->
         Box(

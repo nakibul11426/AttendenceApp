@@ -156,7 +156,19 @@ fun MainScreen(
             composable(BottomNavItem.History.route) {
                 HistoryScreenContent(
                     isDarkTheme = isDarkTheme,
-                    onToggleTheme = onToggleTheme
+                    onToggleTheme = onToggleTheme,
+                    onDateClick = { date ->
+                        navController.navigate("history_detail/$date")
+                    }
+                )
+            }
+            
+            // History Detail Screen
+            composable("history_detail/{date}") { backStackEntry ->
+                val date = backStackEntry.arguments?.getString("date") ?: ""
+                HistoryDetailScreen(
+                    date = date,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
             

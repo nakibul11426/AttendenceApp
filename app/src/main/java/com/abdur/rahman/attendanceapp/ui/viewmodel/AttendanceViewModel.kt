@@ -8,6 +8,7 @@ import com.abdur.rahman.attendanceapp.data.model.AttendanceStatus
 import com.abdur.rahman.attendanceapp.data.model.Student
 import com.abdur.rahman.attendanceapp.data.repository.AttendanceRepository
 import com.abdur.rahman.attendanceapp.util.SmsHelper
+import com.abdur.rahman.attendanceapp.util.SmsResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,12 +24,19 @@ data class StudentAttendanceItem(
     val pendingStatus: AttendanceStatus? = null // Status waiting for confirmation
 )
 
+// Snackbar message types
+sealed class SnackbarMessage {
+    data class Success(val message: String) : SnackbarMessage()
+    data class Error(val message: String) : SnackbarMessage()
+}
+
 data class AttendanceUiState(
     val students: List<StudentAttendanceItem> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
     val todayDate: String = "",
-    val smsError: SmsErrorInfo? = null // For SMS failure dialog
+    val smsError: SmsErrorInfo? = null, // For SMS failure dialog
+    val snackbarMessage: SnackbarMessage? = null // For snackbar notifications
 )
 
 // SMS Error information for dialog
@@ -147,25 +155,44 @@ class AttendanceViewModel : ViewModel() {
             val shouldSendSms = repository.shouldSendSms(student.id)
             
             if (shouldSendSms) {
-                val smsSent = SmsHelper.sendAbsenceSms(
+                val smsResult = SmsHelper.sendAbsenceSms(
                     context = context,
                     phoneNumber = student.parentPhone,
                     studentName = student.name
                 )
                 
-                if (!smsSent) {
-                    // SMS failed - show error dialog and don't update database
-                    _uiState.value = _uiState.value.copy(
-                        smsError = SmsErrorInfo(
-                            studentName = student.name,
-                            parentPhone = student.parentPhone,
-                            errorMessage = "Failed to send absence notification SMS to ${student.parentPhone}. Attendance not marked."
+                when (smsResult) {
+                    is SmsResult.Success -> {
+                        // Show success snackbar
+                        _uiState.value = _uiState.value.copy(
+                            snackbarMessage = SnackbarMessage.Success(
+                                "SMS sent to parent of ${smsResult.studentName}"
+                            )
                         )
-                    )
-                    // Clear selection but don't update attendance
-                    _selectedStudentId.value = null
-                    _pendingStatus.value = _pendingStatus.value - student.id
-                    return
+                    }
+                    is SmsResult.Error -> {
+                        // SMS failed - show error dialog and don't update database
+                        _uiState.value = _uiState.value.copy(
+                            smsError = SmsErrorInfo(
+                                studentName = student.name,
+                                parentPhone = student.parentPhone,
+                                errorMessage = "Failed to send absence notification SMS to ${student.parentPhone}. Attendance not marked."
+                            )
+                        )
+                        // Clear selection but don't update attendance
+                        _selectedStudentId.value = null
+                        _pendingStatus.value = _pendingStatus.value - student.id
+                        return
+                    }
+                    is SmsResult.PermissionDenied -> {
+                        // Permission denied - show error snackbar
+                        _uiState.value = _uiState.value.copy(
+                            snackbarMessage = SnackbarMessage.Error("SMS permission not granted")
+                        )
+                        _selectedStudentId.value = null
+                        _pendingStatus.value = _pendingStatus.value - student.id
+                        return
+                    }
                 }
             }
         }
@@ -198,6 +225,13 @@ class AttendanceViewModel : ViewModel() {
      */
     fun clearSmsError() {
         _uiState.value = _uiState.value.copy(smsError = null)
+    }
+    
+    /**
+     * Clear snackbar message
+     */
+    fun clearSnackbarMessage() {
+        _uiState.value = _uiState.value.copy(snackbarMessage = null)
     }
     
     /**
