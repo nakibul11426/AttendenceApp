@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -121,7 +120,6 @@ fun StudentDetailScreen(
                         AttendanceSummaryCard(
                             presentDays = uiState.presentDays,
                             absentDays = uiState.absentDays,
-                            holidayDays = uiState.holidayDays,
                             attendancePercentage = uiState.attendancePercentage
                         )
                     }
@@ -142,12 +140,6 @@ fun StudentDetailScreen(
                                 value = uiState.absentDays.toString(),
                                 label = "Absent",
                                 color = AbsentColor,
-                                modifier = Modifier.weight(1f)
-                            )
-                            StatCard(
-                                value = uiState.holidayDays.toString(),
-                                label = "Holiday",
-                                color = HolidayColor,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -269,7 +261,6 @@ fun StudentInfoCard(
 fun AttendanceSummaryCard(
     presentDays: Int,
     absentDays: Int,
-    holidayDays: Int,
     attendancePercentage: Float
 ) {
     val animatedProgress by animateFloatAsState(
@@ -392,21 +383,18 @@ fun AttendanceHistoryItem(record: AttendanceRecord) {
     val statusColor = when (record.status) {
         AttendanceStatus.PRESENT -> PresentColor
         AttendanceStatus.ABSENT -> AbsentColor
-        AttendanceStatus.HOLIDAY -> HolidayColor
         AttendanceStatus.NOT_MARKED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     
     val statusIcon = when (record.status) {
         AttendanceStatus.PRESENT -> Icons.Default.Check
         AttendanceStatus.ABSENT -> Icons.Default.Close
-        AttendanceStatus.HOLIDAY -> Icons.Default.BeachAccess
         AttendanceStatus.NOT_MARKED -> Icons.Default.QuestionMark
     }
     
     val statusText = when (record.status) {
         AttendanceStatus.PRESENT -> "Present"
         AttendanceStatus.ABSENT -> "Absent"
-        AttendanceStatus.HOLIDAY -> "Holiday"
         AttendanceStatus.NOT_MARKED -> "Not Marked"
     }
     

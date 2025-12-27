@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +31,6 @@ import java.util.*
 // Color definitions
 private val PresentColorDetail = Color(0xFF4CAF50)
 private val AbsentColorDetail = Color(0xFFF44336)
-private val HolidayColorDetail = Color(0xFFFF9800)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,7 +124,6 @@ fun HistoryDetailScreen(
                     SummaryCard(
                         presentCount = uiState.presentCount,
                         absentCount = uiState.absentCount,
-                        holidayCount = uiState.holidayCount,
                         notMarkedCount = uiState.notMarkedCount,
                         totalCount = uiState.records.size
                     )
@@ -158,7 +155,6 @@ fun HistoryDetailScreen(
 private fun SummaryCard(
     presentCount: Int,
     absentCount: Int,
-    holidayCount: Int,
     notMarkedCount: Int,
     totalCount: Int
 ) {
@@ -199,12 +195,6 @@ private fun SummaryCard(
                     label = "Absent",
                     color = AbsentColorDetail,
                     icon = Icons.Default.Close
-                )
-                SummaryItem(
-                    count = holidayCount,
-                    label = "Holiday",
-                    color = HolidayColorDetail,
-                    icon = Icons.Default.WbSunny
                 )
             }
             
@@ -300,14 +290,12 @@ private fun StudentRecordCard(record: AttendanceRecord) {
         AttendanceStatus.NOT_MARKED -> MaterialTheme.colorScheme.onSurface
         AttendanceStatus.PRESENT -> PresentColorDetail
         AttendanceStatus.ABSENT -> AbsentColorDetail
-        AttendanceStatus.HOLIDAY -> HolidayColorDetail
     }
     
     val statusText = when (record.status) {
         AttendanceStatus.NOT_MARKED -> "Not Marked"
         AttendanceStatus.PRESENT -> "Present"
         AttendanceStatus.ABSENT -> "Absent"
-        AttendanceStatus.HOLIDAY -> "Holiday"
     }
     
     Card(

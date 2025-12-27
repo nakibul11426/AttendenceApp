@@ -15,7 +15,6 @@ data class HistoryDetailUiState(
     val records: List<AttendanceRecord> = emptyList(),
     val presentCount: Int = 0,
     val absentCount: Int = 0,
-    val holidayCount: Int = 0,
     val notMarkedCount: Int = 0,
     val isLoading: Boolean = true,
     val error: String? = null
@@ -42,7 +41,6 @@ class HistoryDetailViewModel : ViewModel() {
                     records = sortedRecords,
                     presentCount = records.count { it.status == AttendanceStatus.PRESENT },
                     absentCount = records.count { it.status == AttendanceStatus.ABSENT },
-                    holidayCount = records.count { it.status == AttendanceStatus.HOLIDAY },
                     notMarkedCount = records.count { it.status == AttendanceStatus.NOT_MARKED },
                     isLoading = false
                 )

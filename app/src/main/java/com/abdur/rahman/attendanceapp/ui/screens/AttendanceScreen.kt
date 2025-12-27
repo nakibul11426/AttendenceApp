@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BeachAccess
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -56,7 +55,6 @@ import java.util.*
 // Color definitions based on requirements
 val PresentColor = Color(0xFF4CAF50)  // Green
 val AbsentColor = Color(0xFFF44336)   // Red
-val HolidayColor = Color(0xFF2196F3) // Blue
 
 /**
  * Theme Toggle Button Component
@@ -432,13 +430,6 @@ fun AttendanceScreenContent(
             },
             onAbsentTap = {
                 viewModel.onAttendanceTap(context, item.student, AttendanceStatus.ABSENT)
-                val updatedItem = uiState.students.find { it.student.id == item.student.id }
-                if (updatedItem != null) {
-                    selectedStudentItem = updatedItem
-                }
-            },
-            onHolidayToggle = {
-                viewModel.toggleHoliday(item.student)
                 val updatedItem = uiState.students.find { it.student.id == item.student.id }
                 if (updatedItem != null) {
                     selectedStudentItem = updatedItem
@@ -884,21 +875,18 @@ fun StudentAttendanceCard(
         AttendanceStatus.NOT_MARKED -> MaterialTheme.colorScheme.onSurfaceVariant
         AttendanceStatus.PRESENT -> PresentColor
         AttendanceStatus.ABSENT -> AbsentColor
-        AttendanceStatus.HOLIDAY -> HolidayColor
     }
     
     val statusText = when (item.status) {
         AttendanceStatus.NOT_MARKED -> "Not Marked"
         AttendanceStatus.PRESENT -> "Present"
         AttendanceStatus.ABSENT -> "Absent"
-        AttendanceStatus.HOLIDAY -> "Holiday"
     }
     
     val statusIcon = when (item.status) {
         AttendanceStatus.NOT_MARKED -> null
         AttendanceStatus.PRESENT -> Icons.Default.Check
         AttendanceStatus.ABSENT -> Icons.Default.Close
-        AttendanceStatus.HOLIDAY -> Icons.Default.BeachAccess
     }
     
     Card(
@@ -986,15 +974,13 @@ fun AttendanceDialog(
     onDismiss: () -> Unit,
     onPresentTap: () -> Unit,
     onAbsentTap: () -> Unit,
-    onHolidayToggle: () -> Unit,
     onConfirmed: () -> Unit
 ) {
-    val isHoliday = item.status == AttendanceStatus.HOLIDAY
     val pendingStatus = item.pendingStatus
     
     // Auto-close dialog when attendance is confirmed (not pending anymore)
     LaunchedEffect(item.status, pendingStatus) {
-        if (item.status != AttendanceStatus.NOT_MARKED && pendingStatus == null && !isHoliday) {
+        if (item.status != AttendanceStatus.NOT_MARKED && pendingStatus == null) {
             // Status was just confirmed
         }
     }
@@ -1048,14 +1034,12 @@ fun AttendanceDialog(
                     AttendanceStatus.NOT_MARKED -> MaterialTheme.colorScheme.onSurfaceVariant
                     AttendanceStatus.PRESENT -> PresentColor
                     AttendanceStatus.ABSENT -> AbsentColor
-                    AttendanceStatus.HOLIDAY -> HolidayColor
                 }
                 
                 val currentStatusText = when (item.status) {
                     AttendanceStatus.NOT_MARKED -> "Not Marked"
                     AttendanceStatus.PRESENT -> "Present"
                     AttendanceStatus.ABSENT -> "Absent"
-                    AttendanceStatus.HOLIDAY -> "Holiday"
                 }
                 
                 Text(
@@ -1076,7 +1060,7 @@ fun AttendanceDialog(
                     AttendanceDialogButton(
                         text = if (pendingStatus == AttendanceStatus.PRESENT) "Confirm" else "Present",
                         color = PresentColor,
-                        enabled = !isHoliday,
+                        enabled = true,
                         isHighlighted = item.status == AttendanceStatus.PRESENT,
                         isPending = pendingStatus == AttendanceStatus.PRESENT,
                         onClick = {
@@ -1092,7 +1076,7 @@ fun AttendanceDialog(
                     AttendanceDialogButton(
                         text = if (pendingStatus == AttendanceStatus.ABSENT) "Confirm" else "Absent",
                         color = AbsentColor,
-                        enabled = !isHoliday,
+                        enabled = true,
                         isHighlighted = item.status == AttendanceStatus.ABSENT,
                         isPending = pendingStatus == AttendanceStatus.ABSENT,
                         onClick = {
@@ -1102,35 +1086,6 @@ fun AttendanceDialog(
                             }
                         },
                         modifier = Modifier.weight(1f)
-                    )
-                }
-                
-                // Holiday button
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                OutlinedButton(
-                    onClick = {
-                        onHolidayToggle()
-                        if (!isHoliday) {
-                            onConfirmed()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (isHoliday) HolidayColor else Color.Transparent,
-                        contentColor = if (isHoliday) Color.White else HolidayColor
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, HolidayColor)
-                ) {
-                    Icon(
-                        Icons.Default.BeachAccess,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isHoliday) "Remove Holiday" else "Mark as Holiday",
-                        fontWeight = FontWeight.Medium
                     )
                 }
                 

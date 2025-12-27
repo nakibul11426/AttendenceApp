@@ -121,13 +121,6 @@ class AttendanceViewModel : ViewModel() {
         student: Student,
         status: AttendanceStatus
     ) {
-        val currentItem = _uiState.value.students.find { it.student.id == student.id }
-        
-        // If Holiday mode is on, don't allow marking attendance
-        if (currentItem?.status == AttendanceStatus.HOLIDAY) {
-            return
-        }
-        
         viewModelScope.launch {
             val selectedId = _selectedStudentId.value
             val pendingMap = _pendingStatus.value
@@ -232,32 +225,6 @@ class AttendanceViewModel : ViewModel() {
      */
     fun clearSnackbarMessage() {
         _uiState.value = _uiState.value.copy(snackbarMessage = null)
-    }
-    
-    /**
-     * Toggle Holiday mode for a student
-     */
-    fun toggleHoliday(student: Student) {
-        viewModelScope.launch {
-            val currentItem = _uiState.value.students.find { it.student.id == student.id }
-            val currentStatus = currentItem?.status ?: AttendanceStatus.NOT_MARKED
-            
-            val newStatus = if (currentStatus == AttendanceStatus.HOLIDAY) {
-                AttendanceStatus.NOT_MARKED
-            } else {
-                AttendanceStatus.HOLIDAY
-            }
-            
-            repository.updateAttendance(
-                studentId = student.id,
-                studentName = student.name,
-                status = newStatus
-            )
-            
-            // Clear any pending selection for this student
-            _selectedStudentId.value = null
-            _pendingStatus.value = _pendingStatus.value - student.id
-        }
     }
     
     /**

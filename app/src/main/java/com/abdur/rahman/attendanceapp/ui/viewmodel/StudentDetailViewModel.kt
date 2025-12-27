@@ -21,7 +21,6 @@ data class StudentDetailUiState(
     val totalDays: Int = 0,
     val presentDays: Int = 0,
     val absentDays: Int = 0,
-    val holidayDays: Int = 0,
     val notMarkedDays: Int = 0,
     val attendancePercentage: Float = 0f
 )
@@ -45,11 +44,10 @@ class StudentDetailViewModel : ViewModel() {
                 repository.getStudentAttendanceHistory(studentId).collect { records ->
                     val presentDays = records.count { it.status == AttendanceStatus.PRESENT }
                     val absentDays = records.count { it.status == AttendanceStatus.ABSENT }
-                    val holidayDays = records.count { it.status == AttendanceStatus.HOLIDAY }
                     val notMarkedDays = records.count { it.status == AttendanceStatus.NOT_MARKED }
                     val totalDays = records.size
                     
-                    // Calculate attendance percentage (excluding holidays and not marked)
+                    // Calculate attendance percentage
                     val attendableDays = presentDays + absentDays
                     val attendancePercentage = if (attendableDays > 0) {
                         (presentDays.toFloat() / attendableDays.toFloat()) * 100
@@ -64,7 +62,6 @@ class StudentDetailViewModel : ViewModel() {
                         totalDays = totalDays,
                         presentDays = presentDays,
                         absentDays = absentDays,
-                        holidayDays = holidayDays,
                         notMarkedDays = notMarkedDays,
                         attendancePercentage = attendancePercentage
                     )
