@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "215407168020",
-    "firebase_url": "https://test-462fb.firebaseio.com",
-    "project_id": "test-462fb",
-    "storage_bucket": "test-462fb.firebasestorage.app"
+    "project_number": "742957769106",
+    "project_id": "attendance-system-4a23a",
+    "storage_bucket": "attendance-system-4a23a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:215407168020:android:89062b632dbcc01e20f501",
+        "mobilesdk_app_id": "1:742957769106:android:3afb71687ea80ff892614b",
         "android_client_info": {
           "package_name": "com.abdur.rahman.attendanceapp"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAJcbqkIXVF-9KWI8BS6QyGIOHpyaadN-w"
+          "current_key": "AIzaSyCFEZ6KmBl_hwdfhmolibUPiRWbyMMMh-A"
         }
       ],
       "services": {
