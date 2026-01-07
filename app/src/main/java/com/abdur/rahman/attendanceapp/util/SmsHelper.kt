@@ -29,7 +29,7 @@ object SmsHelper {
                 return SmsResult.PermissionDenied
             }
             
-            val message = "Your child $studentName was marked absent today."
+            val message = "Your child $studentName was marked absent from Madrasa.\nJazakallah."
             
             val smsManager = context.getSystemService(SmsManager::class.java)
             smsManager.sendTextMessage(
